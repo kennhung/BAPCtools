@@ -1,35 +1,41 @@
 # NOTE: This installs the BAPCtools version from the GitHub master branch.
-FROM archlinux:latest
-MAINTAINER ragnar.grootkoerkamp@gmail.com
-RUN pacman -Syu --noconfirm \
-	automake \
-	git \
-	sudo \
-	tidy \
-	vim \
+FROM ubuntu:jammy
+MAINTAINER kennhuang@alum.ccu.edu.tw
+
+RUN apt update
+RUN apt upgrade
+
+RUN DEBIAN_FRONTEND=noninteractive TZ=Etc/UTC apt -y install tzdata
+
+# Install build tools
+RUN apt install -y \
+	build-essential \
 	gcc \
-	python \
 	pypy \
 	pypy3 \
-	python-yaml \
-	python-colorama \
-	python-argcomplete \
-	python-pytest \
-	python-ruamel-yaml \
-	python2 \
-	jdk17-openjdk \
-	kotlin \
-	texlive-core \
-	texlive-latexextra \
-	texlive-pictures \
-	texlive-science \
-	boost-libs \
-	asymptote \
-	ghostscript \
-	&& \
-	pacman -Scc --noconfirm
-RUN git clone https://github.com/RagnarGrootKoerkamp/BAPCtools /opt/bapctools && \
-    ln -sfn /opt/bapctools/bin/tools.py /usr/bin/bt && ln -sfn /opt/bapctools/third_party/checktestdata /usr/bin/checktestdata
+	default-jdk \
+	kotlin
+
+# Install Latex
+RUN apt install -y \
+	texlive \
+	texlive-latex-extra \
+	latexmk
+
+# Install pip3
+RUN apt install -y \
+	wget
+RUN wget https://bootstrap.pypa.io/get-pip.py
+RUN python3 ./get-pip.py
+
+# Install BAPC python deps
+RUN pip install pyyaml colorama argcomplete ruamel.yaml questionary
+
+COPY . /opt/bapctools
+
+RUN ln -sfn /opt/bapctools/bin/tools.py /usr/bin/bt && \
+	ln -sfn /opt/bapctools/third_party/checktestdata /usr/bin/checktestdata
+
 RUN mkdir /data
 WORKDIR /data
 ENTRYPOINT ["/bin/bt"]
